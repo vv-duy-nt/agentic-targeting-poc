@@ -1,0 +1,5 @@
+\set ON_ERROR_STOP on
+\getenv agent_user POSTGRES_AGENT_USER
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+    GRANT SELECT ON TABLES TO :"agent_user";
