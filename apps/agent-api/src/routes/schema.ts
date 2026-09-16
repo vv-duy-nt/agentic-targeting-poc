@@ -1,0 +1,2 @@
+import { getDatabaseSchema,getTableSchema,listTables } from "@poc/database"; import type { Pool } from "pg"; import type { FastifyInstance } from "fastify";
+export async function schemaRoutes(app:FastifyInstance,pool:Pool){app.get("/tables",async()=>({tables:await listTables(pool)}));app.get("/schema",async()=>({tables:await getDatabaseSchema(pool)}));app.get<{Params:{table:string}}>("/schema/:table",async r=>getTableSchema(pool,r.params.table));}
