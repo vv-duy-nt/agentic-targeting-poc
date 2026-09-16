@@ -9,6 +9,26 @@ Prompt → Gemini Agent → SQL Validator → PostgreSQL (read-only)
 
 PoC mô phỏng kiến trúc BigQuery/Cloud Storage bằng PostgreSQL/MinIO để chạy được trên máy local. AI không có credential database và mọi SQL phải qua lớp validator trước khi chạy.
 
+## Cấu trúc source
+
+```text
+apps/
+  agent-api/       Fastify API: metadata, product, SQL validation/execution
+  web/             Next.js demo UI (giai đoạn sau)
+packages/
+  shared/          Types, Zod schemas, constants dùng chung
+  database/        Admin/agent DB pools, metadata, product repository
+  storage/         MinIO adapter
+  sql-validator/   PostgreSQL AST parser và security rules
+  providers/       Gemini/provider abstraction (giai đoạn sau)
+  tools/           Tool boundary cho agent (giai đoạn sau)
+  agent/           Agent workflow/orchestration (giai đoạn sau)
+infra/postgres/    Schema, roles và bootstrap SQL
+scripts/           Seed DB, seed storage, query verify
+demo-data/         Data/asset demo; Git chỉ giữ asset mẫu
+docs/              Plan, progress, kiến trúc và build guide
+```
+
 ## Điều kiện cần
 
 - Node.js 22+
@@ -72,6 +92,5 @@ docker compose ps  # trạng thái container
 | `POST /sql/validate` | Kiểm tra SQL AI sinh ra |
 | `POST /sql/execute` | Validate lại rồi chạy SELECT bằng `agent_reader` |
 
-Xem hướng dẫn triển khai/tóm tắt để báo cáo hoặc handoff tại [BUILD_GUIDE.md](docs/BUILD_GUIDE.md).
 
 Không commit `.env` hoặc bất kỳ API key/password nào.
