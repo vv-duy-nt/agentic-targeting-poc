@@ -1,0 +1,1 @@
+{"name":"@poc/database","private":true,"version":"1.0.0","scripts":{"build":"tsc -b","typecheck":"tsc --noEmit"},"dependencies":{"pg":"^8","zod":"^3"},"devDependencies":{"@poc/shared":"workspace:*","typescript":"^5"}}

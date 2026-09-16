@@ -1,0 +1,1 @@
+{"name":"@poc/tools","private":true,"version":"1.0.0","scripts":{"build":"tsc -b","typecheck":"tsc --noEmit"},"dependencies":{"@poc/database":"workspace:*","@poc/providers":"workspace:*","@poc/shared":"workspace:*","@poc/sql-validator":"workspace:*","@poc/storage":"workspace:*","zod":"^3"},"devDependencies":{"typescript":"^5"}}
