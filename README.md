@@ -20,7 +20,7 @@ packages/
   database/        Admin/agent DB pools, metadata, product repository
   storage/         MinIO adapter
   sql-validator/   PostgreSQL AST parser và security rules
-  providers/       Gemini/provider abstraction (giai đoạn sau)
+  providers/       Gemini/provider abstraction, JSON/Zod response boundary
   tools/           Tool boundary cho agent (giai đoạn sau)
   agent/           Agent workflow/orchestration (giai đoạn sau)
 infra/postgres/    Schema, roles và bootstrap SQL
@@ -68,7 +68,12 @@ MinIO: dùng `MINIO_ACCESS_KEY` và `MINIO_SECRET_KEY` trong `.env`.
 5. Shared contracts và database package: hoàn thành — Zod contracts, metadata tools, product repository, admin/agent read-only pools.
 6. Read-only API foundation: hoàn thành — health, schema metadata và product endpoints đã verify qua HTTP.
 7. SQL security boundary: hoàn thành — PostgreSQL AST parser, SELECT-only validation, consent/LIMIT/table whitelist và execution bằng `agent_reader`.
-8. Các bước sau: asset endpoint, Gemini provider, agent workflow và web demo.
+8. AI provider abstraction: hoàn thành — Gemini/OpenAI-compatible factory, structured JSON parse và Zod validation; key chỉ được yêu cầu khi gọi provider.
+9. Natural Language → SQL: hoàn thành — nhận prompt Việt/English/日本語, dùng schema thật, sinh SQL rồi local-validate; endpoint này không execute query.
+10. Tool layer: hoàn thành — registry Zod cho schema/SQL/product/image; SQL execution luôn re-validate và dùng `agent_reader`.
+11. Deterministic agent workflow: hoàn thành — `POST /agent/run` trả segment, SQL, validation, product, image URL và trace.
+12. Web demo: hoàn thành — giao diện bảng kết quả gọi `/agent/run`, có prompt mẫu Việt/Anh/Nhật, SQL/rules, segment, product ảnh và trace.
+13. Các bước sau: automated tests, demo handoff và mở rộng chat UI.
 
 ## Lệnh hữu ích
 
@@ -79,8 +84,32 @@ pnpm db:seed       # reset và tạo dữ liệu demo PostgreSQL
 pnpm storage:seed  # tạo bucket và upload assets MinIO
 pnpm typecheck     # kiểm tra TypeScript toàn workspace
 pnpm --filter @app/agent-api dev  # chạy read-only API tại localhost:3001
+pnpm --filter @app/web dev        # chạy web demo tại localhost:3000
 docker compose ps  # trạng thái container
 ```
+
+Web demo mặc định gọi `http://localhost:3001`. Nếu API chạy ở host/port khác, đặt `NEXT_PUBLIC_AGENT_API_URL` trong `apps/web/.env.local` rồi restart Next.js.
+
+## Cấu hình AI provider
+
+Provider và các endpoint AI đã sẵn sàng. Key/model dùng tên biến chung, không gắn cứng theo hãng. Điền trong `.env` (không commit file này):
+
+```env
+AI_PROVIDER=gemini
+AI_API_KEY=your_key
+AI_MODEL=gemini-3.6-flash
+```
+
+Với OpenAI, Groq, OpenRouter hoặc API tương thích OpenAI:
+
+```env
+AI_PROVIDER=openai-compatible
+AI_API_KEY=your_key
+AI_MODEL=provider_model_name
+AI_BASE_URL=https://provider.example/v1
+```
+
+Thiếu `AI_API_KEY` không làm API metadata hiện tại dừng; chỉ lỗi cấu hình an toàn khi code khởi tạo provider. Claude và các giao thức khác sẽ có adapter riêng nhưng vẫn dùng `AI_API_KEY` và `AI_MODEL`.
 
 ## API đã có
 
@@ -91,6 +120,10 @@ docker compose ps  # trạng thái container
 | `GET /products` | Đọc product bằng role agent read-only |
 | `POST /sql/validate` | Kiểm tra SQL AI sinh ra |
 | `POST /sql/execute` | Validate lại rồi chạy SELECT bằng `agent_reader` |
+| `POST /sql/generate` | Prompt Việt/English/日本語 → SQL + validator result; không execute SQL |
+| `POST /agent/run` | Luồng end-to-end read-only: prompt → segment → product → image → trace |
+
+`POST /sql/generate` chỉ retry một lần khi model trả JSON sai contract. Lỗi cấu hình AI, provider hoặc response dùng mã riêng (`AI_CONFIGURATION_ERROR`, `AI_PROVIDER_ERROR`, `AI_RESPONSE_ERROR`) và không trả secret ra client.
 
 
 Không commit `.env` hoặc bất kỳ API key/password nào.
