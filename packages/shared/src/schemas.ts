@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { AGENT_EVENT_TYPES, ALLOWED_TABLES } from "./constants.js";
 
+export const tableNameSchema = z.enum(ALLOWED_TABLES);
+
 export const customerSchema = z.object({
   id: z.number().int().positive(),
   name: z.string(),
@@ -41,6 +43,41 @@ export const sqlValidationResultSchema = z.object({
   rules: z.array(sqlValidationRuleSchema),
 });
 
+export const sqlGenerationIntentSchema = z.enum([
+  "customer_segmentation",
+  "product_lookup",
+  "unsupported",
+]);
+
+export const supportedLanguageSchema = z.enum(["vi", "en", "ja"]);
+
+export const sqlGenerationSchema = z
+  .object({
+    intent: sqlGenerationIntentSchema,
+    language: supportedLanguageSchema,
+    sql: z.string().trim().min(1).max(20_000).nullable(),
+    explanation: z.string().trim().min(1).max(2_000),
+    tablesUsed: z.array(tableNameSchema).max(ALLOWED_TABLES.length),
+    error: z.string().trim().min(1).max(1_000).nullable().optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.intent === "unsupported" && value.sql !== null) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Unsupported requests must not include SQL.",
+        path: ["sql"],
+      });
+    }
+
+    if (value.intent !== "unsupported" && value.sql === null) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Supported requests must include SQL.",
+        path: ["sql"],
+      });
+    }
+  });
+
 export const agentEventSchema = z.object({
   type: z.enum(AGENT_EVENT_TYPES),
   timestamp: z.string().datetime(),
@@ -48,6 +85,7 @@ export const agentEventSchema = z.object({
   message: z.string(),
   durationMs: z.number().nonnegative().optional(),
   rowCount: z.number().int().nonnegative().optional(),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 export const agentRunRequestSchema = z.object({
@@ -68,5 +106,3 @@ export const agentRunResultSchema = z.object({
   trace: z.array(agentEventSchema),
   errorCode: z.string().optional(),
 });
-
-export const tableNameSchema = z.enum(ALLOWED_TABLES);
