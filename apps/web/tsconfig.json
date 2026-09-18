@@ -1,1 +1,28 @@
-{"extends":"../../tsconfig.base.json","compilerOptions":{"jsx":"react-jsx","lib":["ES2022","DOM"],"module":"ESNext","moduleResolution":"bundler"},"include":["src/**/*"],"exclude":["node_modules","dist"]}
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "strictNullChecks": true
+  },
+  "include": [
+    "src/**/*",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
